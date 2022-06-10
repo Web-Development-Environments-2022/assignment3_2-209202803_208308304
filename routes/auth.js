@@ -2,7 +2,7 @@ var express = require("express");
 var router = express.Router();
 const MySql = require("../routes/utils/MySql");
 const DButils = require("../routes/utils/DButils");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt.js");
 
 router.post("/Register", async (req, res, next) => {
   try {
@@ -16,7 +16,7 @@ router.post("/Register", async (req, res, next) => {
       country: req.body.country,
       password: req.body.password,
       email: req.body.email,
-      //profilePic: req.body.profilePic
+      ///profilePic: req.body.profilePic
     }
     let users = [];
     users = await DButils.execQuery("SELECT username from users");
