@@ -2,9 +2,9 @@ var express = require("express");
 var router = express.Router();
 const MySql = require("../routes/utils/MySql");
 const DButils = require("../routes/utils/DButils");
-const bcrypt = require("bcrypt.js");
+const bcrypt = require("bcryptjs");
 
-router.post("/Register", async (req, res, next) => {
+router.post("/register", async (req, res, next) => {
   try {
     // parameters exists
     // valid parameters
@@ -16,13 +16,13 @@ router.post("/Register", async (req, res, next) => {
       country: req.body.country,
       password: req.body.password,
       email: req.body.email,
-      ///profilePic: req.body.profilePic
+      //profilePic: req.body.profilePic
     }
     let users = [];
     users = await DButils.execQuery("SELECT username from users");
 
     if (users.find((x) => x.username === user_details.username))
-      throw { status: 409, message: "Username taken" };
+      throw { status: 409, message: "username already exists"};
 
     // add the new username
     let hash_password = bcrypt.hashSync(
@@ -33,18 +33,18 @@ router.post("/Register", async (req, res, next) => {
       `INSERT INTO users (username, firstname, lastname, country, password, email) VALUES ('${user_details.username}', '${user_details.firstname}', '${user_details.lastname}',
       '${user_details.country}', '${hash_password}', '${user_details.email}')`
     );
-    res.status(201).send({ message: "user created", success: true });
+    res.status(201).send({ message: "new user created", success: true });
   } catch (error) {
     next(error);
   }
 });
 
-router.post("/Login", async (req, res, next) => {
+router.post("/login", async (req, res, next) => {
   try {
     // check that username exists
     const users = await DButils.execQuery("SELECT username FROM users");
     if (!users.find((x) => x.username === req.body.username))
-      throw { status: 401, message: "Username or Password incorrect" };
+      throw { status: 404, message: "username or password incorrect" };
 
     // check that the password is correct
     const user = (
@@ -54,7 +54,7 @@ router.post("/Login", async (req, res, next) => {
     )[0];
 
     if (!bcrypt.compareSync(req.body.password, user.password)) {
-      throw { status: 401, message: "Username or Password incorrect" };
+      throw { status: 404, message: "username or password incorrect" };
     }
 
     // Set cookie
@@ -62,15 +62,18 @@ router.post("/Login", async (req, res, next) => {
 
 
     // return cookie
-    res.status(200).send({ message: "login succeeded", success: true });
+    res.status(200).send({ message: "successful login", success: true });
   } catch (error) {
     next(error);
   }
 });
 
-router.post("/Logout", function (req, res) {
-  req.session.reset(); // reset the session info --> send cookie when  req.session == undefined!!
-  res.send({ success: true, message: "logout succeeded" });
+router.put("/logout", function (req, res) {
+  if (!req.session || !req.session.user_id){
+    throw { status: 412, message: "no user is logged in" };
+  }
+  req.session.reset(); 
+  res.send({ success: true, message: "successful logout"});
 });
 
 module.exports = router;
