@@ -61,7 +61,7 @@ router.post("/login", async (req, res, next) => {
     req.session.user_id = user.user_id;
 
 
-    // return cookie
+    //return cookie
     res.status(200).send({ message: "successful login", success: true });
   } catch (error) {
     next(error);
@@ -73,7 +73,7 @@ router.put("/logout", function (req, res) {
     throw { status: 412, message: "no user is logged in" };
   }
   req.session.reset(); 
-  res.send({ success: true, message: "successful logout"});
+  res.send({ message: "successful logout", success: true});
 });
 
 module.exports = router;
