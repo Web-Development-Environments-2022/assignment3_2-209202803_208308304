@@ -42,7 +42,7 @@ router.get('/favorites', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
     let favorite_recipes = {};
-    const recipes_id = await user_utils.getFavoriteRecipes(user_id);
+    const recipes_id = await user_utils.getFavoriteRecipes(user_id);   
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
     const results = await recipes_utils.getAllPreview(user_id, recipes_id_array);
@@ -90,7 +90,7 @@ router.post('/myrecipes', async (req,res,next) => {
 router.get('/myrecipes', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
-    const My_recipes = await recipes_utils.getAllUserRecipes(user_id);
+    const My_recipes = await recipes_utils.getAllMyRecipesPreview(user_id);
     res.status(200).send(My_recipes);
   }catch(error){
     next(error);

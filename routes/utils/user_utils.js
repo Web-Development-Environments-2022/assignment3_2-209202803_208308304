@@ -2,14 +2,17 @@ const DButils = require("./DButils");
 
 async function markAsFavorite(user_id, recipe_id){
     user_fav = await DButils.execQuery(`SELECT recipe_id from FavoriteRecipes WHERE user_id = '${user_id}' and recipe_id = '${recipe_id}'`);
-    if (user_fav === null)
+    if (user_fav.length == 0){
+        recipe_id = recipe_id.toString();
         await DButils.execQuery(`insert into FavoriteRecipes values ('${user_id}',${recipe_id})`);
+    }
 }
 
 async function markAsWatched(user_id, recipe_id){
     let user_watch = await DButils.execQuery(`SELECT recipe_id from WatchedRecipes WHERE user_id = '${user_id}' and recipe_id = '${recipe_id}'`);
     let local_time = new Date().toISOString().slice(0, 19).replace('T', ' ');
     if (user_watch.length==0) { 
+        recipe_id = recipe_id.toString();
         await DButils.execQuery(`INSERT INTO WatchedRecipes VALUES ('${user_id}', '${recipe_id}', '${local_time}')`);
     }
     else {
