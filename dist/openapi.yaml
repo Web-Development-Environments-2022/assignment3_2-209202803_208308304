@@ -461,14 +461,14 @@ components:
     FullRecipe:
       required:
       - Preview
-      - Ingredients
-      - Instructions
+      - ingredients
+      - instructions
       - servings
       type: object
       properties:
         Preview:
           $ref: '#/components/schemas/Preview'
-        Ingredients:
+        ingredients:
           type: array
           description: a list of the ingredients and the amount for the recipe.
           example:
@@ -480,7 +480,7 @@ components:
             "metric": "cup"}
           items:
             $ref: '#/components/schemas/Ingredient'
-        Instructions:
+        instructions:
           type: array
           description: a list of the instructions of the recipe, include step number and description
           example:
@@ -502,8 +502,8 @@ components:
       - vegan
       - vegetarian
       - glutenFree
-      - Ingredients
-      - Instructions
+      - ingredients
+      - instructions
       - servings
       type: object
       properties:
@@ -538,7 +538,7 @@ components:
           type: boolean
           description: marks this recipes as gluten free(true) or not gluten free(false)
           example: false
-        Ingredients:
+        ingredients:
           type: array
           description: a list of the ingredients and the amount for the recipe.
           example:
@@ -550,7 +550,7 @@ components:
             "metric": "cup"}
           items:
             $ref: '#/components/schemas/Ingredient'
-        Instructions:
+        instructions:
           type: array
           description: a list of the instructions of the recipe, include step number and description
           example:
@@ -572,8 +572,8 @@ components:
       - vegan
       - vegetarian
       - glutenFree
-      - Ingredients
-      - Instructions
+      - ingredients
+      - instructions
       - servings
       - owner
       - tradition
@@ -610,7 +610,7 @@ components:
           type: boolean
           description: marks this recipes as gluten free(true) or not gluten free(false)
           example: false
-        Ingredients:
+        ingredients:
           type: array
           description: a list of the ingredients and the amount for the recipe.
           example:
@@ -622,7 +622,7 @@ components:
             "metric": "cup"}
           items:
             $ref: '#/components/schemas/Ingredient'
-        Instructions:
+        instructions:
           type: array
           description: a list of the instructions of the recipe, include step number and description
           example:
