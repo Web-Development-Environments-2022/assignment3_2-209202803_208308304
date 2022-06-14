@@ -11,7 +11,7 @@ router.get('/', async (req, res, next) => {
     if(req.session && req.session.user_id){
       user_id = req.session.user_id;
     }
-    let search_results = await recipes_utils.searchRecipes(user_id, req.query.query, req.query.numOfResults, req.query.cuisinesFilter, req.query.dietsFilter, req.query.intolerancesFilter,req.query.sortedBy,req.query.sortDirection);
+    let search_results = await recipes_utils.searchRecipes(user_id, req.query.query, req.query.numOfResults, req.query.cuisinesFilter, req.query.dietsFilter, req.query.intolerancesFilter);
 
     res.status(200).send(search_results);
   }

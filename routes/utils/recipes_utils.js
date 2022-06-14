@@ -82,7 +82,6 @@ async function getRecipeFull(recipe_details_dict){
 
 async function getRecipesPreviewFromAPI(recipes_id_array) {
     let recipe_info_array = await getRecipeInformationBulk(recipes_id_array);
-    console.log(recipe_info_array.data);
     let recipe_preview_array = [];
     for(let i =0; i<recipes_id_array.length; i++){
         let recipe_preview = await getRecipePreview(recipe_info_array.data[i]);
@@ -171,12 +170,11 @@ async function getRandomRecipes(user_id){
     });
     let recipes_array = [];
     let recipes_id_array = [];
-    let recipe_details = {};
     for(let i=0; i<3; i++){
         let recipe_preview = await getRecipePreview(random_recipes.data.recipes[i]);
         let preview_details = {Preview: recipe_preview};
         recipes_array.push(preview_details);
-        recipes_id_array.push(id);
+        recipes_id_array.push(recipe_preview.recipe_id);
     }
     recipes_array = await addFavoriteAndWatched(user_id, recipes_id_array, recipes_array);
     return recipes_array;
@@ -201,7 +199,6 @@ async function getMyRecipeFull(user_id, recipe_id){
     let recipe_preview = await getRecipePreview(recipe_details[0]);
     let ingredients = [];
     let instructions = [];
-    console.log(recipe_details[0].ingredients);
     if(recipe_details[0].ingredients!="")
         ingredients = JSON.parse(recipe_details[0].ingredients);
     if(recipe_details[0].instructions!="")
@@ -227,16 +224,15 @@ async function getRecipesPreviewFromDB(user_id, recipes_id_array){
     return sub_recipes;
 }
 
-async function searchRecipes(user_id, query, numOfResults, cuisinesFilter, dietsFilter, intolerancesFilter,sortedBy,sortDirection) {
+async function searchRecipes(user_id, query, numOfResults, cuisinesFilter, dietsFilter, intolerancesFilter) {
     let search_results =  await axios.get(`${api_domain}/complexSearch`, {
         params: {
             query: query,
             addRecipeInformation: true,
+            fillIngredients: true,
             cuisine: cuisinesFilter,
             diet: dietsFilter,
             intolerances: intolerancesFilter,
-            sort: sortedBy,
-            sortDirection: sortDirection,
             number: numOfResults,
             apiKey: process.env.spooncular_apiKey
         }
@@ -247,18 +243,17 @@ async function searchRecipes(user_id, query, numOfResults, cuisinesFilter, diets
     for(let i=0; i<search_results_array.length; i++){
         let recipe_full = await getRecipeFull(search_results_array[i]);
         recipes_array.push(recipe_full);
-        recipes_id_array.push(id);
+        recipes_id_array.push(recipe_full.Preview.recipe_id);
     }
     recipes_array = await addFavoriteAndWatched(user_id, recipes_id_array, recipes_array);
     return recipes_array;
 }
 
-// exports.getRecipeDetails = getRecipeDetails;
 exports.getAllPreview = getAllPreview;
 exports.getFullRecipe = getFullRecipe;
 exports.getRandomRecipes = getRandomRecipes;
 exports.getUserLastWatched = getUserLastWatched;
-exports.getRecipesPreviewFromDB = getRecipesPreviewFromDB;
-exports.getRecipesPreviewFromAPI = getRecipesPreviewFromAPI;
 exports.getMyRecipeFull = getMyRecipeFull;
 exports.searchRecipes = searchRecipes;
+exports.getRecipePreview = getRecipePreview;
+exports.addFavoriteAndWatched = addFavoriteAndWatched;

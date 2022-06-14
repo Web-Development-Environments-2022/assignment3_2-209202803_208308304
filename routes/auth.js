@@ -6,9 +6,10 @@ const bcrypt = require("bcryptjs");
 
 router.post("/register", async (req, res, next) => {
   try {
-    // parameters exists
-    // valid parameters
-    // username exists
+    if(req.session && req.session.user_id){
+      throw { status: 412, message: "a user is logged in" };
+    }
+
     let user_details = {
       username: req.body.username,
       firstname: req.body.firstname,

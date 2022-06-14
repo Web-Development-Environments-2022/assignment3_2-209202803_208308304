@@ -38,6 +38,8 @@ paths:
           description: new user created
         "409":
           description: username already exists
+        "412":
+          description: a user is logged in
   /auth/login:
     post:
       tags:
@@ -76,7 +78,7 @@ paths:
       tags:
       - users
       summary: save recipe Id as favorite for a specific user
-      description: sends recipe Id to be added as favorit fot a specific user
+      description: sends recipe Id to be added as favorite for a specific user
       operationId: "4"
       requestBody:
         content:
@@ -219,7 +221,6 @@ paths:
                 $ref: '#/components/schemas/FullRecipe'
         "404":
           description: Recipe Not Found
-#TODO
   /search:
     get:
       tags:
@@ -228,7 +229,7 @@ paths:
       description: returns a json object with a list of recipes containing the query name
       operationId: "12"
       parameters:
-      - name: recipeName
+      - name: query
         in: query
         description: The recipe's full/partial name
         required: true
@@ -402,72 +403,238 @@ components:
           example: tom@t0s
     Preview:
       required:
-      - glutenMark
-      - image
-      - isFavorite
-      - isWatched
-      - populatiry
-      - prepTime
       - recipe_id
       - title
-      - veganMark
-      - vegetarianMark
+      - image
+      - readyInMinutes
+      - popularity
+      - vegan
+      - vegetarian
+      - glutenFree
+      - isFavorite
+      - isWatched
       type: object
       properties:
         recipe_id:
           type: string
           description: recipe's Id in the system
           example: "12345"
+        title:
+          type: string
+          description: a recipe's name/title
+          example: bolognese lasagna
         image:
           type: string
           description: URL for the recipe's image
           format: URL
           example: https://img.mako.co.il/2018/05/07/IMG_2700_i.jpg
-        title:
-          type: string
-          description: a recipe's name/title
-          example: bolognese lasagna
-        prepTime:
+        readyInMinutes:
           minimum: 0
           type: integer
           description: preperation time in minutes, greater that 0
           example: 40
-        populatiry:
+        popularity:
           minimum: 0
           type: integer
           description: number of likes a recipe has
           example: 504
-        veganMark:
+        vegan:
           description: marks this recipe as vegan or not
           example: true
           type: boolean
-        vegetarianMark:
+        vegetarian:
           description: marks this recipe as vegetarian or not
           example: true
           type: boolean
-        glutenMark:
+        glutenFree:
           type: boolean
           description: marks this recipes as gluten free(true) or not gluten free(false)
           example: false
-        isWatched:
-          type: boolean
-          description: marks this recipes as watched (true) if the user viewed this recipe or not (false)
-          example: true
         isFavorite:
           type: boolean
           description: marks this recipes as favorite (true) if the user liked this recipe or not (false)
           example: true
-    FamilyRecipe:
+        isWatched:
+          type: boolean
+          description: marks this recipes as watched (true) if the user viewed this recipe or not (false)
+          example: true
+    FullRecipe:
       required:
+      - Preview
       - Ingredients
       - Instructions
-      - Preview
-      - owner
-      - tradition
+      - servings
       type: object
       properties:
         Preview:
           $ref: '#/components/schemas/Preview'
+        Ingredients:
+          type: array
+          description: a list of the ingredients and the amount for the recipe.
+          example:
+          - {"name": "egg",
+            "amount": 1,
+            "metric": "unit"}
+          - {"name": "milk",
+            "amount": 1,
+            "metric": "cup"}
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        Instructions:
+          type: array
+          description: a list of the instructions of the recipe, include step number and description
+          example:
+          - {"number": 1}
+          - {"step": "bake"}
+          items:
+             $ref: '#/components/schemas/Instruction'
+        servings:
+          minimum: 1
+          type: integer
+          description: the recipe's amount of servings
+          example: 4
+    MyRecipe:
+      required:
+      - title
+      - image
+      - readyInMinutes
+      - popularity
+      - vegan
+      - vegetarian
+      - glutenFree
+      - Ingredients
+      - Instructions
+      - servings
+      type: object
+      properties:
+        title:
+          type: string
+          description: a recipe's name/title
+          example: bolognese lasagna
+        image:
+          type: string
+          description: URL for the recipe's image
+          format: URL
+          example: https://img.mako.co.il/2018/05/07/IMG_2700_i.jpg
+        readyInMinutes:
+          minimum: 0
+          type: integer
+          description: preperation time in minutes, greater that 0
+          example: 40
+        popularity:
+          minimum: 0
+          type: integer
+          description: number of likes a recipe has
+          example: 504
+        vegan:
+          description: marks this recipe as vegan or not
+          example: true
+          type: boolean
+        vegetarian:
+          description: marks this recipe as vegetarian or not
+          example: true
+          type: boolean
+        glutenFree:
+          type: boolean
+          description: marks this recipes as gluten free(true) or not gluten free(false)
+          example: false
+        Ingredients:
+          type: array
+          description: a list of the ingredients and the amount for the recipe.
+          example:
+          - {"name": "egg",
+            "amount": 1,
+            "metric": "unit"}
+          - {"name": "milk",
+            "amount": 1,
+            "metric": "cup"}
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        Instructions:
+          type: array
+          description: a list of the instructions of the recipe, include step number and description
+          example:
+          - {"number": 1}
+          - {"step": "bake"}
+          items:
+             $ref: '#/components/schemas/Instruction'
+        servings:
+          minimum: 1
+          type: integer
+          description: the recipe's amount of servings
+          example: 4  
+    FamilyRecipe:
+      required:
+      - title
+      - image
+      - readyInMinutes
+      - popularity
+      - vegan
+      - vegetarian
+      - glutenFree
+      - Ingredients
+      - Instructions
+      - servings
+      - owner
+      - tradition
+      type: object
+      properties:
+        title:
+          type: string
+          description: a recipe's name/title
+          example: bolognese lasagna
+        image:
+          type: string
+          description: URL for the recipe's image
+          format: URL
+          example: https://img.mako.co.il/2018/05/07/IMG_2700_i.jpg
+        readyInMinutes:
+          minimum: 0
+          type: integer
+          description: preperation time in minutes, greater that 0
+          example: 40
+        popularity:
+          minimum: 0
+          type: integer
+          description: number of likes a recipe has
+          example: 504
+        vegan:
+          description: marks this recipe as vegan or not
+          example: true
+          type: boolean
+        vegetarian:
+          description: marks this recipe as vegetarian or not
+          example: true
+          type: boolean
+        glutenFree:
+          type: boolean
+          description: marks this recipes as gluten free(true) or not gluten free(false)
+          example: false
+        Ingredients:
+          type: array
+          description: a list of the ingredients and the amount for the recipe.
+          example:
+          - {"name": "egg",
+            "amount": 1,
+            "metric": "unit"}
+          - {"name": "milk",
+            "amount": 1,
+            "metric": "cup"}
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        Instructions:
+          type: array
+          description: a list of the instructions of the recipe, include step number and description
+          example:
+          - {"number": 1}
+          - {"step": "bake"}
+          items:
+             $ref: '#/components/schemas/Instruction'
+        servings:
+          minimum: 1
+          type: integer
+          description: the recipe's amount of servings
+          example: 4  
         owner:
           type: string
           description: the name of the person the recipe belongs.
@@ -476,22 +643,6 @@ components:
           type: string
           description: when the recipe is customary to prepare it in the family
           example: we make this recipe every passover, exactly like the recipe.
-        Ingredients:
-          type: array
-          description: a list of the ingredients and the amount for the recipe.
-          example:
-          - Ingredient_1
-          - Ingredient_2
-          items:
-            $ref: '#/components/schemas/Ingredient'
-        Instructions:
-          type: array
-          description: a list of the instructions of the recipe, include step number and description
-          example:
-          - Instruction_1
-          - Instruction_2
-          items:
-             $ref: '#/components/schemas/Instruction'
     Ingredient:
       required:
       - amount
@@ -536,52 +687,6 @@ components:
           type: string
           description: the instruction's step description
           example: boil eggs for 8 minutes
-        
-    FullRecipe:
-      required:
-      - Ingredients
-      - Instructions
-      - Preview
-      - servingsAmount
-      type: object
-      properties:
-        Preview:
-          $ref: '#/components/schemas/Preview'
-        Ingredients:
-          type: array
-          description: a list of the ingredients and the amount for the recipe.
-          example:
-          - Ingredient_1
-          - Ingredient_2
-          items:
-            $ref: '#/components/schemas/Ingredient'
-        Instructions:
-          type: array
-          description: a list of the instructions of the recipe, include step number and description
-          example:
-          - Instruction_1
-          - Instruction_2
-          items:
-             $ref: '#/components/schemas/Instruction'
-        servingsAmount:
-          minimum: 1
-          type: integer
-          description: the recipe's amount of servings
-          example: 4
-    MyRecipe:
-      required:
-      - FullRecipe
-      - username
-      type: object
-      properties:
-        username:
-          maxLength: 8
-          minLength: 3
-          type: string
-          description: username contains between 3-8 characters, letters only
-          example: eyalshan
-        FullRecipe:
-          $ref: '#/components/schemas/FullRecipe'
     HomePageResponse:
       required:
       - lastWatchedRecipes
@@ -615,15 +720,8 @@ components:
     FavoriteRecipe:
       required:
       - recipe_id
-      - username
       type: object
       properties:
-        username:
-          maxLength: 8
-          minLength: 3
-          type: string
-          description: username contains between 3-8 characters, letters only
-          example: eyalshan
         recipe_id:
           type: string
           description: recipe's Id in the system

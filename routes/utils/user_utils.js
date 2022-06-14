@@ -1,5 +1,5 @@
 const DButils = require("./DButils");
-const recipes_utils = require("./utils/recipes_utils");
+const recipes_utils = require("./recipes_utils");
 
 async function markAsFavorite(user_id, recipe_id){
     user_fav = await DButils.execQuery(`SELECT recipe_id from FavoriteRecipes WHERE user_id = '${user_id}' and recipe_id = '${recipe_id}'`);
@@ -66,7 +66,7 @@ async function getAllMyRecipesPreview(user_id){
     return recipes_details;
 }
 
-async function changeToPreviewFormat(recipes_details){
+async function changeToPreviewFormat(user_id, recipes_details){
     recipes_details.map((element) => {
         element.vegan = element.vegan == 1;
         element.vegetarian = element.vegetarian == 1;
@@ -87,7 +87,7 @@ async function changeToPreviewFormat(recipes_details){
 async function getAllMyRecipesPreview(user_id){
     const recipes_details = await DButils.execQuery(`select recipe_id AS id, title, image, readyInMinutes, popularity AS aggregateLikes, vegan, vegetarian, glutenFree
     from user_recipes where user_id='${user_id}'`);
-    let my_recipes_preview_array = await changeToPreviewFormat(recipes_details);
+    let my_recipes_preview_array = await changeToPreviewFormat(user_id,recipes_details);
     return my_recipes_preview_array;
 }
 
@@ -98,11 +98,17 @@ async function getAllFamilyRecipes(user_id){
         element.vegan = element.vegan == 1;
         element.vegetarian = element.vegetarian == 1;
         element.glutenFree = element.glutenFree == 1;
-        if(element.ingredients!=""){
+        if(element.ingredients!="" && element.ingredients){
             element.ingredients = JSON.parse(element.ingredients);
         }
-        if(element.instructions!=""){
+        else{
+            element.ingredients =[];
+        }
+        if(element.instructions!="" && element.ingredients){
             element.instructions = JSON.parse(element.instructions);
+        }
+        else{
+            element.instructions =[];
         }
     });
     return recipes_details;
