@@ -1,15 +1,13 @@
 const axios = require("axios");
 const api_domain = "https://api.spoonacular.com/recipes";
 const DButils = require("./DButils");
-
+const user_utils = require("./user_utils");
 
 
 /**
  * Get recipes list from spooncular response and extract the relevant recipe data for preview
  * @param {*} recipes_info 
  */
-
-
 async function getRecipeInformation(recipe_id) {
     return await axios.get(`${api_domain}/${recipe_id}/information`, {
         params: {
@@ -29,74 +27,81 @@ async function getRecipeInformationBulk(recipes_id_array) {
         }
     });
 }
-async function getRecipeDetails(recipe_id) {
-    let recipe_info = await getRecipeInformation(recipe_id);
-    let {id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree } = recipe_info.data;
+// async function getRecipeDetails(recipe_id) {
+//     let recipe_info = await getRecipeInformation(recipe_id);
+//     let recipe_preview = await getRecipePreview(recipe_info.data);
+//     return recipe_preview;
 
-    return {
+// }
+
+async function getRecipePreview(recipe_details_dict){
+    let {id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree } = recipe_details_dict;
+    let recipe_preview={
         recipe_id: id,
-        image: image,
         title: title,
+        image: image,
         readyInMinutes: readyInMinutes,
         popularity: aggregateLikes,
         vegan: vegan,
         vegetarian: vegetarian,
         glutenFree: glutenFree
     }
+    return recipe_preview;
+}
+
+async function getRecipeFull(recipe_details_dict){
+    let recipe_preview = await getRecipePreview(recipe_details_dict);
+    let {servings, extendedIngredients, analyzedInstructions} = recipe_details_dict;
+    ingredients = [];
+    instructions = [];
+    for(let i =0; i<extendedIngredients.length; i++){
+        ingredient_details = {
+            name: extendedIngredients[i].name,
+            amount: extendedIngredients[i].amount,
+            metric: extendedIngredients[i].unit
+        }
+        ingredients.push(ingredient_details);
+    }
+    if(analyzedInstructions.length>0){
+        for(let i =0; i<analyzedInstructions[0].steps.length; i++){
+            instruction_details={
+                number: analyzedInstructions[0].steps[i].number,
+                step: analyzedInstructions[0].steps[i].step
+            }
+            instructions.push(instruction_details);
+        }
+    }
+    let recipe_info_full = {
+        Preview: recipe_preview, 
+        servings_amount: servings,
+        Ingredients: ingredients,
+        Instructions: instructions
+    }
+    return recipe_info_full;
 }
 
 async function getRecipesPreviewFromAPI(recipes_id_array) {
     let recipe_info_array = await getRecipeInformationBulk(recipes_id_array);
+    console.log(recipe_info_array.data);
     let recipe_preview_array = [];
     for(let i =0; i<recipes_id_array.length; i++){
-        let {id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree } = recipe_info_array.data[i];
-        recipe_preview={
-            recipe_id: id,
-            image: image,
-            title: title,
-            readyInMinutes: readyInMinutes,
-            popularity: aggregateLikes,
-            vegan: vegan,
-            vegetarian: vegetarian,
-            glutenFree: glutenFree
-        }
-        recipe_preview_array.push(recipe_preview);
+        let recipe_preview = await getRecipePreview(recipe_info_array.data[i]);
+        let preview_details = {Preview: recipe_preview};
+        recipe_preview_array.push(preview_details);
     }
     return recipe_preview_array;
 }
 
 async function getFullRecipe(user_id, recipe_id){
-    let recipe_info_full = {};
+    let recipe_full= {};
     if(recipe_id.includes("my")){
-        recipe_info_full = await getMyRecipeFull(user_id,recipe_id)
+        recipe_full = await getMyRecipeFull(user_id,recipe_id)
     }
     else{
         let recipe_info = await getRecipeInformation(recipe_id);
-        let {id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree, servings, extendedIngredients, analyzedInstructions } = recipe_info.data;
-        ingredients = [];
-        for(let i =0; i<extendedIngredients.length; i++){
-            ingredient_details = {
-                name: extendedIngredients[i].name,
-                amount: extendedIngredients[i].amount,
-                metric: extendedIngredients[i].unit
-            }
-            ingredients.push(ingredient_details)
-        }
-        recipe_info_full = {
-            recipe_id: id,
-            image: image,
-            title: title,
-            readyInMinutes: readyInMinutes,
-            popularity: aggregateLikes,
-            vegan: vegan,
-            vegetarian: vegetarian,
-            glutenFree: glutenFree,
-            servings_amount: servings,
-            Ingredients: ingredients,
-            Instructions: analyzedInstructions //filter?
-        }
+        recipe_full= await getRecipeFull(recipe_info.data);
     }
-    recipe_info_full = await addFavoriteAndWatched(user_id, [recipe_id], [recipe_info_full]);
+    recipe_info_full = await addFavoriteAndWatched(user_id, [recipe_id], [recipe_full]);
     return recipe_info_full[0];
 }
 
@@ -141,8 +146,8 @@ async function addFavoriteAndWatched(user_id, recipes_id_array, recipes_details_
     user_fav_dict.map((element) => user_fav_array.push(element.recipe_id));
     user_watched_dict.map((element) => user_watch_array.push(element.recipe_id));
     for(let i=0; i<recipes_id_array.length; i++){
-        recipes_details_array[i]['isFavorite'] = (user_fav_array.includes(recipes_id_array[i]));
-        recipes_details_array[i]['isWatched'] = (user_watch_array.includes(recipes_id_array[i]));
+        recipes_details_array[i].Preview['isFavorite'] = (user_fav_array.includes(recipes_id_array[i]));
+        recipes_details_array[i].Preview['isWatched'] = (user_watch_array.includes(recipes_id_array[i]));
     }
     return recipes_details_array;
 }
@@ -168,60 +173,87 @@ async function getRandomRecipes(user_id){
     let recipes_id_array = [];
     let recipe_details = {};
     for(let i=0; i<3; i++){
-        let {id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree } = random_recipes.data.recipes[i];
-        recipe_details ={
-            recipe_id: id,
-            image: image,
-            title: title,
-            readyInMinutes: readyInMinutes,
-            popularity: aggregateLikes,
-            vegan: vegan,
-            vegetarian: vegetarian,
-            glutenFree: glutenFree
-        }
+        let recipe_preview = await getRecipePreview(random_recipes.data.recipes[i]);
+        let preview_details = {Preview: recipe_preview};
+        recipes_array.push(preview_details);
         recipes_id_array.push(id);
-        recipes_array.push(recipe_details);
     }
     recipes_array = await addFavoriteAndWatched(user_id, recipes_id_array, recipes_array);
     return recipes_array;
 }
 
 async function getUserLastWatched(user_id){
-    user_last_watched = await DButils.execQuery(`SELECT recipe_id from WatchedRecipes WHERE user_id = '${user_id}' ORDER BY last_watched_time LIMIT 3`);
+    user_last_watched = await DButils.execQuery(`SELECT recipe_id from WatchedRecipes WHERE user_id = '${user_id}' ORDER BY last_watched_time DESC LIMIT 3`);
     user_last_watched_array = [];
     user_last_watched.map((element) => user_last_watched_array.push(element.recipe_id));
-    //console.log(user_last_watched_array);
     user_last_watched_preview = await getAllPreview(user_id, user_last_watched_array);
+    num_of_recipes= user_last_watched.length;
+    while(3-num_of_recipes>0){
+        user_last_watched_preview.push({});
+        num_of_recipes++;
+    }
     return user_last_watched_preview;
 }
 
 async function getMyRecipeFull(user_id, recipe_id){
-    const recipe_full = await DButils.execQuery(`select recipe_id, title, image, readyInMinutes, popularity, vegan, vegetarian, glutenFree, ingredients, instructions, servings_amount
+    const recipe_details = await DButils.execQuery(`select recipe_id AS id, title, image, readyInMinutes, popularity AS aggregateLikes, vegan, vegetarian, glutenFree, ingredients, instructions, servings_amount
     from user_recipes where user_id='${user_id}' and recipe_id = '${recipe_id}'`);
-    return recipe_full[0];
-}
-
-async function getAllMyRecipesPreview(user_id){
-    const recipes_details = await DButils.execQuery(`select recipe_id, title, image, readyInMinutes, popularity, vegan, vegetarian, glutenFree
-    from user_recipes where user_id='${user_id}'`);
-    return recipes_details;
+    let recipe_preview = await getRecipePreview(recipe_details[0]);
+    let ingredients = [];
+    let instructions = [];
+    console.log(recipe_details[0].ingredients);
+    if(recipe_details[0].ingredients!="")
+        ingredients = JSON.parse(recipe_details[0].ingredients);
+    if(recipe_details[0].instructions!="")
+        instructions = JSON.parse(recipe_details[0].instructions);
+    let recipe_full = {
+        Preview: recipe_preview,
+        servings_amount: recipe_details[0].servings_amount,
+        Ingredients: ingredients,
+        Instructions: instructions
+    };
+    return recipe_full;
 }
 
 
 async function getRecipesPreviewFromDB(user_id, recipes_id_array){
-    let user_recipes_preview = await getAllMyRecipesPreview(user_id);
+    let user_recipes_preview = await user_utils.getAllMyRecipesPreview(user_id);
     let sub_recipes = [];
     for(var i=0; i<user_recipes_preview.length; i++){
-        if(recipes_id_array.includes(user_recipes_preview[i].recipe_id)){ //TODO see the .recipe_id
-            //TODO check favorites, check watched, add values to list,
-
+        if(recipes_id_array.includes(user_recipes_preview[i].Preview.recipe_id)){
             sub_recipes.push(user_recipes_preview[i]);
         }
     }
     return sub_recipes;
 }
 
-exports.getRecipeDetails = getRecipeDetails;
+async function searchRecipes(user_id, query, numOfResults, cuisinesFilter, dietsFilter, intolerancesFilter,sortedBy,sortDirection) {
+    let search_results =  await axios.get(`${api_domain}/complexSearch`, {
+        params: {
+            query: query,
+            addRecipeInformation: true,
+            cuisine: cuisinesFilter,
+            diet: dietsFilter,
+            intolerances: intolerancesFilter,
+            sort: sortedBy,
+            sortDirection: sortDirection,
+            number: numOfResults,
+            apiKey: process.env.spooncular_apiKey
+        }
+    });
+    search_results_array =search_results.data.results;
+    let recipes_id_array =[];
+    let recipes_array=[];
+    for(let i=0; i<search_results_array.length; i++){
+        let recipe_full = await getRecipeFull(search_results_array[i]);
+        recipes_array.push(recipe_full);
+        recipes_id_array.push(id);
+    }
+    recipes_array = await addFavoriteAndWatched(user_id, recipes_id_array, recipes_array);
+    return recipes_array;
+}
+
+// exports.getRecipeDetails = getRecipeDetails;
 exports.getAllPreview = getAllPreview;
 exports.getFullRecipe = getFullRecipe;
 exports.getRandomRecipes = getRandomRecipes;
@@ -229,4 +261,4 @@ exports.getUserLastWatched = getUserLastWatched;
 exports.getRecipesPreviewFromDB = getRecipesPreviewFromDB;
 exports.getRecipesPreviewFromAPI = getRecipesPreviewFromAPI;
 exports.getMyRecipeFull = getMyRecipeFull;
-exports.getAllMyRecipesPreview = getAllMyRecipesPreview;
+exports.searchRecipes = searchRecipes;

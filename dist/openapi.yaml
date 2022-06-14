@@ -10,19 +10,19 @@ servers:
 # - url: "http://132.72.84.107"
   description: SwaggerHub API Auto Mocking hey
 tags:
-- name: user
-  description: Users register and login calls
-- name: personal
-  description: Operations available to logged in users
+- name: auth
+  description: Athenticat Users By register and login calls
+- name: users
+  description: Operations available to logged in users like favorite , my and family recipes
 - name: recipes
   description: Operations of Display recipes and mark them as watched/liked
 - name: search
   description: Search recipes by term with optional filters
 paths:
-  /user/register:
+  /auth/register:
     post:
       tags:
-      - user
+      - auth
       summary: adds a new user to the DB
       description: A json object that contains all the details about the new user.
       operationId: "1"
@@ -36,14 +36,12 @@ paths:
       responses:
         "201":
           description: new user created
-        "400":
-          description: invalid input
         "409":
           description: username already exists
-  /user/login:
+  /auth/login:
     post:
       tags:
-      - user
+      - auth
       summary: login to the system
       description: A json object that contains username and password for the server to verify.
       operationId: "2"
@@ -57,27 +55,48 @@ paths:
       responses:
         "200":
           description: successful login
-        "400":
-          description: invalid input
+        "412":
+          description: a user is already logged in
         "404":
           description: username or password incorrect
-  #/user/logout:        
-  /personal/favorites/{username}:
+  /auth/logout:
+    put:
+      tags:
+      - auth
+      summary: logout from the system
+      description: logout user if he is connected
+      operationId: "3"
+      responses:
+        "200":
+          description: successful logout
+        "412":
+          description: no user is logged in
+  /users/favorites:
+    post:
+      tags:
+      - users
+      summary: save recipe Id as favorite for a specific user
+      description: sends recipe Id to be added as favorit fot a specific user
+      operationId: "4"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FavoriteRecipe'
+        required: true
+      responses:
+        "201":
+          description: recipe successfully saved as favorite
+        "404":
+          description: recipe Id Not Found
+        "412":
+          description: no user is logged in
     get:
       tags:
-      - personal
+      - users
       summary: get favorite recipes of a specific user
-      description: get from client a username and return his favorite recipes.
-      operationId: "3"
-      parameters:
-      - name: username
-        in: path
-        description: the username of the user for which we want the favorites list
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
+      description: return user's favorite recipes.
+      operationId: "5"
       responses:
         "200":
           description: returns a json object with array of favorite recipes of the user
@@ -87,24 +106,33 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Preview'
-        "404":
-          description: favorite recipes does not exist for this user
-  /personal/myrecipes/{username}:
+        "412":
+          description: no user is logged in          
+  /users/myrecipes:
+    post:
+      tags:
+      - users
+      summary: create a new user recipe, which will be added to 'my recipes'
+      description: A json object that contains all the details about the new recipe.
+      operationId: "6"
+      requestBody:
+        description: recipe details to add to the DB
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MyRecipe'
+        required: true
+      responses:
+        "201":
+          description: new recipe created
+        "412":
+          description: no user is logged in
     get:
       tags:
-      - personal
-      summary: get the recipes created by a specific user
-      description: get from client a username and return the recipes he created.
-      operationId: "4"
-      parameters:
-      - name: username
-        in: path
-        description: the username of the user for which we want the personal recipes list
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
+      - users
+      summary: get all the recipes created by the logged-in user
+      description: return all the recipes the logged-in user created.
+      operationId: "7"
       responses:
         "200":
           description: returns a json object with array of user's personal recipes.
@@ -114,96 +142,51 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Preview'
-        "404":
-          description: personal recipes does not exist for this user
-  /personal/familyrecipes/{username}:
-    get:
+        "412":
+          description: no user is logged in
+  /users/familyrecipes/:
+    post:
       tags:
-      - personal
-      summary: get the family recipes of a specific user
-      description: get from client a username and return his family recipes.
-      operationId: "5"
-      parameters:
-      - name: username
-        in: path
-        description: the username of the user for which we want the family recipes list.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: returns a json object with array of family recipes of the user.
-          content:
-            application/json:
-              schema:
-                minItems: 3
-                type: array
-                items:
-                  $ref: '#/components/schemas/FamilyRecipe'
-        "404":
-          description: family recipes does not exist for this user
-  /recipes:
-    get:
-      tags:
-      - recipes
-      summary: get main recipes page
-      description: get from server 3 different random recipes when user is not logged in
-      operationId: "6"
-      responses:
-        "200":
-          description: list of 3 random recipes return succesfuly
-          content:
-            application/json:
-              schema:
-                maxItems: 3
-                minItems: 3
-                uniqueItems: true
-                type: array
-                description: 3 random previews of recipes
-                example:
-                - Preview_1
-                - Preview_2
-                - Preview_3
-                items:
-                  $ref: '#/components/schemas/Preview'
-        "404":
-          description: there are no 3 recipes to return
-    put:
-      tags:
-      - recipes
-      summary: add recipe to the user's last watched recipe array
-      description: add this recipe to users last watched recipe list
-      operationId: "12"
+      - users
+      summary: create a new family recipe, which will be added to 'family recipes'
+      description: A json object that contains all the details about the new family recipe.
+      operationId: "8"
       requestBody:
-        description: sends user name and recipe id to append recipe to the user last watched recipes list
+        description: recipe details to add to the DB
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RecipeByUser'
+              $ref: '#/components/schemas/FamilyRecipe'
         required: true
       responses:
         "201":
-          description: recipe has been successfuly added to the user's last watched array
-        "404":
-          description: couldnt find username or recipe_id
-  /recipes/{username}:
+          description: new family recipe created
+        "412":
+          description: no user is logged in
+    get:
+      tags:
+      - users
+      summary: get all the family recipes created by the logged-in user
+      description: return all the recipes the logged-in user created.
+      operationId: "9"
+      responses:
+        "200":
+          description: returns a json object with array of user's family recipes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FamilyRecipe'
+        "412":
+          description: no user is logged in  
+  /recipes/:
     get:
       tags:
       - recipes
-      summary: get main recipes page when user is logged in
-      description: get from server an object with two arrays- 3 random recipes and 3 last watched recipes by the user
-      operationId: "7"
-      parameters:
-      - name: username
-        in: path
-        description: the username of the user for which we want display recipes page with last watched recipes list
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
+      summary: get main recipes page 
+      description: get from server an object with two arrays- 3 random recipes and 3 last watched recipes by the user if user is logged in
+      operationId: "10"
       responses:
         "200":
           description: returns a json object with two arrays- 3 random recipes and 3 last watched recipes by the user
@@ -211,15 +194,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HomePageResponse'
-        "404":
-          description: there are no recipes to return
   /recipes/{recipe_id}:
-    get:
+    put:
       tags:
       - recipes
-      summary: get recipe page by recipe Id
-      description: get from server a recipe and its content by recipe Id
-      operationId: "8"
+      summary: get recipe full page by recipe Id and mark it as watched
+      description: get from server a recipe and its full content by recipe Id, mark it in the DB as watched
+      operationId: "11"
       parameters:
       - name: recipe_id
         in: path
@@ -231,20 +212,21 @@ paths:
           type: string
       responses:
         "200":
-          description: returns a json object with recipe content
+          description: returns a json object with full recipe content
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FullRecipe'
         "404":
-          description: there is no recipe to return
+          description: Recipe Not Found
+#TODO
   /search:
     get:
       tags:
       - search
       summary: search recipe by query and parameters
       description: returns a json object with a list of recipes containing the query name
-      operationId: "9"
+      operationId: "12"
       parameters:
       - name: recipeName
         in: query
@@ -354,56 +336,19 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Preview'
+                  $ref: '#/components/schemas/FullRecipe'
         "404":
           description: recipes not found
-  /personal/myrecipes:
-    post:
-      tags:
-      - personal
-      summary: create a new recipe, which will be added to 'my recipes'
-      description: A json object that contains all the details about the new recipe and the username.
-      operationId: "10"
-      requestBody:
-        description: recipe details to add to the DB
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NewRecipe'
-        required: true
-      responses:
-        "201":
-          description: new recipe created
-        "400":
-          description: invalid input
-  /personal/favorite:
-    put:
-      tags:
-      - personal
-      summary: update favorite recipes of a specific user
-      description: sends user name and recipe Id to append recipe to the user favorite recipes list
-      operationId: "11"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecipeByUser'
-        required: true
-      responses:
-        "201":
-          description: successful add recipe to favorite recipes of the user
-        "404":
-          description: could not find user name or recipe Id
 components:
   schemas:
     Register:
       required:
-      - country
-      - email
+      - username
       - firstname
       - lastname
+      - country
       - password
-      - username
+      - email
       type: object
       properties:
         username:
@@ -438,8 +383,8 @@ components:
           example: eyalShani@gmail.com
     Login:
       required:
-      - password
       - username
+      - password
       type: object
       properties:
         username:
@@ -493,12 +438,10 @@ components:
           description: number of likes a recipe has
           example: 504
         veganMark:
-          type: string
           description: marks this recipe as vegan or not
           example: true
           type: boolean
         vegetarianMark:
-          type: string
           description: marks this recipe as vegetarian or not
           example: true
           type: boolean
@@ -543,13 +486,12 @@ components:
             $ref: '#/components/schemas/Ingredient'
         Instructions:
           type: array
-          description: a list of the instructions of the recipe, every cell is a step.
+          description: a list of the instructions of the recipe, include step number and description
           example:
-          - boil water
-          - add salt
-          - add the pasta for 10 minutes
+          - Instruction_1
+          - Instruction_2
           items:
-            type: string
+             $ref: '#/components/schemas/Instruction'
     Ingredient:
       required:
       - amount
@@ -579,6 +521,22 @@ components:
           - g
           - ml
           - pinch
+    Instruction:
+      required:
+      - number
+      - step
+      type: object
+      properties:
+        number:
+          minimum: 0
+          type: integer
+          description: the instruction's step number
+          example: 1
+        step:
+          type: string
+          description: the instruction's step description
+          example: boil eggs for 8 minutes
+        
     FullRecipe:
       required:
       - Ingredients
@@ -599,19 +557,18 @@ components:
             $ref: '#/components/schemas/Ingredient'
         Instructions:
           type: array
-          description: a list of the instructions of the recipe, every cell is a step.
+          description: a list of the instructions of the recipe, include step number and description
           example:
-          - boil water
-          - add salt
-          - add the pasta for 10 minutes
+          - Instruction_1
+          - Instruction_2
           items:
-            type: string
+             $ref: '#/components/schemas/Instruction'
         servingsAmount:
           minimum: 1
           type: integer
           description: the recipe's amount of servings
           example: 4
-    NewRecipe:
+    MyRecipe:
       required:
       - FullRecipe
       - username
@@ -645,7 +602,7 @@ components:
             $ref: '#/components/schemas/Preview'
         lastWatchedRecipes:
           maxItems: 3
-          minItems: 3
+          minItems: 0
           uniqueItems: true
           type: array
           description: return previews of user's 3 last watched recipes
@@ -655,7 +612,7 @@ components:
           - Preview_3
           items:
             $ref: '#/components/schemas/Preview'
-    RecipeByUser:
+    FavoriteRecipe:
       required:
       - recipe_id
       - username

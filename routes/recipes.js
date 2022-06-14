@@ -11,17 +11,17 @@ const DButils = require("./utils/DButils");
  */
  router.get("/", async (req, res, next) => {
    try {
-     let user_id = -1
-    if(req.session && req.session.user_id){
-      const user_id = req.session.user_id;
-    }
-    const last_watched = await recipes_utils.getUserLastWatched(user_id)
-    const random_recipes = await recipes_utils.getRandomRecipes(user_id);
-    let home_recipes =[];
-    home_recipes.push(random_recipes);
-    home_recipes.push(last_watched);
-
-    res.status(200).send(home_recipes);
+     let user_id = -1;
+     let last_watched = [];
+      if(req.session && req.session.user_id){
+        user_id = req.session.user_id;
+        last_watched = await recipes_utils.getUserLastWatched(user_id);
+      }
+      const random_recipes = await recipes_utils.getRandomRecipes(user_id);
+      let home_recipes =[];
+      home_recipes.push(random_recipes);
+      home_recipes.push(last_watched);
+      res.status(200).send(home_recipes);
    }
   catch (error) {
     next(error);
@@ -32,12 +32,22 @@ const DButils = require("./utils/DButils");
 /**
  * This path returns a full details of a recipe by its id
  */
-router.get("/:recipeId", async (req, res, next) => {
+ router.put("/:recipeId", async (req, res, next) => {
   try {
-    const user_id = req.session.user_id;
-    const recipe = await recipes_utils.getFullRecipe(user_id, req.params.recipeId);
-    await user_utils.markAsWatched(user_id,recipe.recipe_id);
-    res.status(200).send(recipe);
+    let user_id = -1;
+    if (req.session && req.session.user_id) {
+      user_id = req.session.user_id;
+    }
+    const exist = await user_utils.checkIfRecipeIdExist(user_id, req.params.recipeId);
+    if(exist){
+      const recipe = await recipes_utils.getFullRecipe(user_id, req.params.recipeId);
+      if(user_id != -1){
+        await user_utils.markAsWatched(user_id,req.params.recipeId); 
+      }
+      res.status(200).send(recipe);
+    } else {
+      res.status(404).send({message: "Recipe Not Found", success: false});
+    }
   } catch (error) {
     next(error);
   }

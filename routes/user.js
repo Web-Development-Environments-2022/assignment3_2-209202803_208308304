@@ -16,7 +16,8 @@ router.use(async function (req, res, next) {
       }
     }).catch(err => next(err));
   } else {
-    res.sendStatus(401);
+    //res.sendStatus(401);
+    res.status(412).send({message: "No user is logged in", success: false});
   }
 });
 
@@ -28,9 +29,14 @@ router.post('/favorites', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
     const recipe_id = req.body.recipe_id;
-    await user_utils.markAsFavorite(user_id,recipe_id);
-    res.status(200).send({message: "The Recipe successfully saved as favorite", success: true});
-    } catch(error){
+    const exist = await user_utils.checkIfRecipeIdExist(user_id, recipe_id);
+    if(exist){
+      await user_utils.markAsFavorite(user_id,recipe_id);
+      res.status(200).send({message: "Recipe successfully saved as favorite", success: true});
+    } else {
+      res.status(404).send({message: "Recipe Id Not Found", success: false});
+    }
+  } catch(error){
     next(error);
   }
 })
@@ -41,8 +47,7 @@ router.post('/favorites', async (req,res,next) => {
 router.get('/favorites', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
-    let favorite_recipes = {};
-    const recipes_id = await user_utils.getFavoriteRecipes(user_id);   
+    const recipes_id = await user_utils.getFavoriteRecipes(user_id);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
     const results = await recipes_utils.getAllPreview(user_id, recipes_id_array);
@@ -52,14 +57,13 @@ router.get('/favorites', async (req,res,next) => {
   }
 });
 
-
 /**
  * This path gets body that contains all the details about the new recipe the logged-in user wants to create
  */
 router.post('/myrecipes', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
-    let recipe_id = await user_utils.getNewRecipeId(user_id); //gets the id from the table
+    let recipe_id = await user_utils.getNewMyRecipeId(user_id); //gets the id from the table
     let recipe_details = {
       title: req.body.title,
       image: req.body.image,
@@ -68,8 +72,8 @@ router.post('/myrecipes', async (req,res,next) => {
       vegan: req.body.vegan,
       vegetarian: req.body.vegetarian,
       glutenFree: req.body.glutenFree,
-      ingredients: req.body.ingredients,
-      instructions: req.body.instructions,
+      ingredients: JSON.stringify(req.body.ingredients),
+      instructions: JSON.stringify(req.body.instructions),
       servings: req.body.servings,
     }
 
@@ -90,12 +94,54 @@ router.post('/myrecipes', async (req,res,next) => {
 router.get('/myrecipes', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
-    const My_recipes = await recipes_utils.getAllMyRecipesPreview(user_id);
-    res.status(200).send(My_recipes);
+    const my_recipes = await user_utils.getAllMyRecipesPreview(user_id);
+    res.status(200).send(my_recipes);
   }catch(error){
     next(error);
   }
 });
 
+/**
+ * This path gets body that contains all the details about the new family recipe the logged-in user wants to create
+ */
+//TODO INSERT TO API?
+ router.post('/familyrecipes', async (req,res,next) => {
+  try{
+    const user_id = req.session.user_id;
+    let recipe_id = await user_utils.getNewFamilyRecipeId(user_id); //gets the id from the table
+    let recipe_details = {
+      title: req.body.title,
+      image: req.body.image,
+      readyInMinutes: req.body.readyInMinutes,
+      popularity: req.body.popularity,
+      vegan: req.body.vegan,
+      vegetarian: req.body.vegetarian,
+      glutenFree: req.body.glutenFree,
+      ingredients: JSON.stringify(req.body.ingredients),
+      instructions: JSON.stringify(req.body.instructions),
+      servings: req.body.servings,
+      owner: req.body.owner,
+      tradition: req.body.tradition,
+    }
 
+    await DButils.execQuery(
+      `INSERT INTO family_recipes VALUES ('${user_id}', '${recipe_id}', '${recipe_details.title}', '${recipe_details.image}',
+      '${recipe_details.readyInMinutes}', '${recipe_details.popularity}', '${recipe_details.vegan}', '${recipe_details.vegetarian}', '${recipe_details.glutenFree}',
+      '${recipe_details.ingredients}', '${recipe_details.instructions}', '${recipe_details.servings}', '${recipe_details.owner}', '${recipe_details.tradition}')`
+    );
+    res.status(201).send({ message: "new family recipe created", success: true });
+  }catch(error){
+    next(error);
+  }
+});
+
+router.get('/familyrecipes', async (req,res,next) => {
+  try{
+    const user_id = req.session.user_id;
+    const family_recipes = await user_utils.getAllFamilyRecipes(user_id);
+    res.status(200).send(family_recipes);
+  }catch(error){
+    next(error);
+  }
+});
 module.exports = router;

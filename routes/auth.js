@@ -16,7 +16,6 @@ router.post("/register", async (req, res, next) => {
       country: req.body.country,
       password: req.body.password,
       email: req.body.email,
-      //profilePic: req.body.profilePic
     }
     let users = [];
     users = await DButils.execQuery("SELECT username from users");
@@ -37,10 +36,15 @@ router.post("/register", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
+})
 
 router.post("/login", async (req, res, next) => {
   try {
+
+    if(req.session && req.session.user_id){
+      throw { status: 412, message: "a user is already logged in" };
+    }
+
     // check that username exists
     const users = await DButils.execQuery("SELECT username FROM users");
     if (!users.find((x) => x.username === req.body.username))
@@ -60,7 +64,6 @@ router.post("/login", async (req, res, next) => {
     // Set cookie
     req.session.user_id = user.user_id;
 
-
     //return cookie
     res.status(200).send({ message: "successful login", success: true });
   } catch (error) {
@@ -73,7 +76,7 @@ router.put("/logout", function (req, res) {
     throw { status: 412, message: "no user is logged in" };
   }
   req.session.reset(); 
-  res.send({ message: "successful logout", success: true});
+  res.status(200).send({ message: "successful logout", success: true});
 });
 
 module.exports = router;
