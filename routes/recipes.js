@@ -7,27 +7,39 @@ const DButils = require("./utils/DButils");
 // router.get("/", (req, res) => res.send("im here"));
 
 /**
- * This path returns a home page with 3 random recipes and 3 last watch if user is logged in
+ * This path returns a home page with 3 random recipes
  */
- router.get("/", async (req, res, next) => {
+ router.get("/random", async (req, res, next) => {
    try {
      let user_id = -1;
-     let last_watched = [];
       if(req.session && req.session.user_id){
         user_id = req.session.user_id;
-        last_watched = await recipes_utils.getUserLastWatched(user_id);
       }
       const random_recipes = await recipes_utils.getRandomRecipes(user_id);
-      let home_recipes =[];
-      home_recipes.push(random_recipes);
-      home_recipes.push(last_watched);
-      res.status(200).send(home_recipes);
+      res.status(200).send(random_recipes);
    }
   catch (error) {
     next(error);
   }
  });
 
+ /**
+ * This path returns 3 last watch if user is logged in
+ */
+  router.get("/watched", async (req, res, next) => {
+    try {
+      let user_id = -1;
+      let last_watched = [];
+       if(req.session && req.session.user_id){
+         user_id = req.session.user_id;
+         last_watched = await recipes_utils.getUserLastWatched(user_id);
+       }
+       res.status(200).send(last_watched);
+    }
+   catch (error) {
+     next(error);
+   }
+  });
 
 /**
  * This path returns a full details of a recipe by its id

@@ -93,7 +93,7 @@ async function getAllMyRecipesPreview(user_id){
 
 async function getAllFamilyRecipes(user_id){
     const recipes_details = await DButils.execQuery(`select recipe_id AS id, title, image, readyInMinutes, popularity AS aggregateLikes, vegan, vegetarian, glutenFree, owner, tradition,
-    ingredients, instructions from family_recipes where user_id='${user_id}'`);
+    servings, ingredients, instructions from family_recipes where user_id='${user_id}'`);
     recipes_details.map((element) => {
         element.vegan = element.vegan == 1;
         element.vegetarian = element.vegetarian == 1;
@@ -104,7 +104,7 @@ async function getAllFamilyRecipes(user_id){
         else{
             element.ingredients =[];
         }
-        if(element.instructions!="" && element.ingredients){
+        if(element.instructions!="" && element.instructions){
             element.instructions = JSON.parse(element.instructions);
         }
         else{
