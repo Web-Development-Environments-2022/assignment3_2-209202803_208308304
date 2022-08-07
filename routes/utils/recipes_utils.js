@@ -63,13 +63,18 @@ async function getRecipeFull(recipe_details_dict) {
         ingredients.push(ingredient_details);
     }
     if (analyzedInstructions.length > 0) {
-        for (let i = 0; i < analyzedInstructions[0].steps.length; i++) {
-            instruction_details = {
-                number: analyzedInstructions[0].steps[i].number,
-                step: analyzedInstructions[0].steps[i].step
+        let number=1;
+        for (let j = 0;  j < analyzedInstructions.length; j++){
+            for (let i = 0; i < analyzedInstructions[j].steps.length; i++) {
+                instruction_details = {
+                    number: number,
+                    step: analyzedInstructions[0].steps[i].step
+                }
+                instructions.push(instruction_details);
+                number++;
             }
-            instructions.push(instruction_details);
         }
+
     }
     let recipe_info_full = {
         Preview: recipe_preview,

@@ -17,7 +17,7 @@ router.use(async function (req, res, next) {
     }).catch(err => next(err));
   } else {
     //res.sendStatus(401);
-    res.status(412).send({message: "No user is logged in", success: false});
+    res.status(419).send({message: "Session expired please log back in", success: false});
   }
 });
 
