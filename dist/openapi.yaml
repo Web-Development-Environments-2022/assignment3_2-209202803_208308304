@@ -11,9 +11,9 @@ servers:
   description: SwaggerHub API Auto Mocking hey
 tags:
 - name: auth
-  description: Athenticat Users By register and login calls
+  description: Athenticate Users By register and login calls
 - name: users
-  description: Operations available to logged in users like favorite , my and family recipes
+  description: Operations available to logged in users like favorite , personal and family recipes
 - name: recipes
   description: Operations of Display recipes and mark them as watched/liked
 - name: search
@@ -38,8 +38,6 @@ paths:
           description: new user created
         "409":
           description: username already exists
-        "412":
-          description: a user is logged in
   /auth/login:
     post:
       tags:
@@ -57,8 +55,6 @@ paths:
       responses:
         "200":
           description: successful login
-        "412":
-          description: a user is already logged in
         "404":
           description: username or password incorrect
   /auth/logout:
@@ -91,8 +87,8 @@ paths:
           description: recipe successfully saved as favorite
         "404":
           description: recipe Id Not Found
-        "412":
-          description: no user is logged in
+        "419":
+          description: Session expired, please login again
     get:
       tags:
       - users
@@ -108,8 +104,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Preview'
-        "412":
-          description: no user is logged in          
+        "419":
+          description: Session expired, please login again          
   /users/myrecipes:
     post:
       tags:
@@ -127,8 +123,8 @@ paths:
       responses:
         "201":
           description: new recipe created
-        "412":
-          description: no user is logged in
+        "419":
+          description: Session expired, please login again
     get:
       tags:
       - users
@@ -144,8 +140,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Preview'
-        "412":
-          description: no user is logged in
+        "419":
+          description: Session expired, please login again
   /users/familyrecipes/:
     post:
       tags:
@@ -163,8 +159,8 @@ paths:
       responses:
         "201":
           description: new family recipe created
-        "412":
-          description: no user is logged in
+        "419":
+          description: Session expired, please login again
     get:
       tags:
       - users
@@ -180,29 +176,43 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/FamilyRecipe'
-        "412":
-          description: no user is logged in  
-  /recipes/:
+        "419":
+          description: Session expired, please login again
+  /recipes/random:
     get:
       tags:
       - recipes
-      summary: get main recipes page 
-      description: get from server an object with two arrays- 3 random recipes and 3 last watched recipes by the user if user is logged in
+      summary: get three random recipes 
+      description: get from server an array of 3 random recipes
       operationId: "10"
       responses:
         "200":
-          description: returns a json object with two arrays- 3 random recipes and 3 last watched recipes by the user
+          description: returns a json object with an array of 3 random recipes
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HomePageResponse'
+                $ref: '#/components/schemas/PreviewList'
+  /recipes/watched:
+    get:
+      tags:
+      - recipes
+      summary: get three last watched recipes
+      description: get from server an arrays of 3 last watched recipes by the user if user is logged in
+      operationId: "11"
+      responses:
+        "200":
+          description: returns a json object with an array of 3 last watched recipes by the user, or else empty array
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreviewList'
   /recipes/{recipe_id}:
     put:
       tags:
       - recipes
       summary: get recipe full page by recipe Id and mark it as watched
       description: get from server a recipe and its full content by recipe Id, mark it in the DB as watched
-      operationId: "11"
+      operationId: "12"
       parameters:
       - name: recipe_id
         in: path
@@ -227,7 +237,7 @@ paths:
       - search
       summary: search recipe by query and parameters
       description: returns a json object with a list of recipes containing the query name
-      operationId: "12"
+      operationId: "13"
       parameters:
       - name: query
         in: query
@@ -610,6 +620,19 @@ components:
           type: boolean
           description: marks this recipes as gluten free(true) or not gluten free(false)
           example: false
+        owner:
+          type: string
+          description: the name of the person the recipe belongs.
+          example: grandma Iris
+        tradition:
+          type: string
+          description: when the recipe is customary to prepare it in the family
+          example: we make this recipe every passover, exactly like the recipe.
+        servings:
+          minimum: 1
+          type: integer
+          description: the recipe's amount of servings
+          example: 4  
         ingredients:
           type: array
           description: a list of the ingredients and the amount for the recipe.
@@ -630,19 +653,6 @@ components:
           - {"step": "bake"}
           items:
              $ref: '#/components/schemas/Instruction'
-        servings:
-          minimum: 1
-          type: integer
-          description: the recipe's amount of servings
-          example: 4  
-        owner:
-          type: string
-          description: the name of the person the recipe belongs.
-          example: grandma Iris
-        tradition:
-          type: string
-          description: when the recipe is customary to prepare it in the family
-          example: we make this recipe every passover, exactly like the recipe.
     Ingredient:
       required:
       - amount
@@ -687,36 +697,18 @@ components:
           type: string
           description: the instruction's step description
           example: boil eggs for 8 minutes
-    HomePageResponse:
-      required:
-      - lastWatchedRecipes
-      - randomRecipes
-      type: object
-      properties:
-        randomRecipes:
-          maxItems: 3
-          minItems: 3
-          uniqueItems: true
-          type: array
-          description: return previews of 3 random  recipes
-          example:
-          - Preview_1
-          - Preview_2
-          - Preview_3
-          items:
-            $ref: '#/components/schemas/Preview'
-        lastWatchedRecipes:
-          maxItems: 3
-          minItems: 0
-          uniqueItems: true
-          type: array
-          description: return previews of user's 3 last watched recipes
-          example:
-          - Preview_1
-          - Preview_2
-          - Preview_3
-          items:
-            $ref: '#/components/schemas/Preview'
+    PreviewList:
+      type: array
+      maxItems: 3
+      minItems: 0
+      uniqueItems: true
+      items:
+        $ref: '#/components/schemas/Preview'
+      description: return previews of 3 recipes
+      example:
+      -  $ref: '#/components/schemas/Preview'
+      -  $ref: '#/components/schemas/Preview'
+      -  $ref: '#/components/schemas/Preview'
     FavoriteRecipe:
       required:
       - recipe_id

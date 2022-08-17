@@ -244,10 +244,9 @@ async function searchRecipes(user_id, query, numOfResults, cuisinesFilter, diets
     let recipes_id_array = [];
     let recipes_array = [];
     for (let i = 0; i < search_results_array.length; i++) {
-        let recipe_preview = await getRecipePreview(search_results_array[i]);
-        let preview_details = { Preview: recipe_preview };
-        recipes_array.push(preview_details);
-        recipes_id_array.push(preview_details.Preview.recipe_id);
+        let recipe_full = await getRecipeFull(search_results_array[i]);
+        recipes_array.push(recipe_full);
+        recipes_id_array.push(recipe_full.Preview.recipe_id);
     }
     recipes_array = await addFavoriteAndWatched(user_id, recipes_id_array, recipes_array);
     return recipes_array;

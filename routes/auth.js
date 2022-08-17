@@ -6,10 +6,6 @@ const bcrypt = require("bcryptjs");
 
 router.post("/register", async (req, res, next) => {
   try {
-    if(req.session && req.session.user_id){
-      throw { status: 412, message: "a user is logged in" };
-    }
-
     let user_details = {
       username: req.body.username,
       firstname: req.body.firstname,
@@ -41,11 +37,6 @@ router.post("/register", async (req, res, next) => {
 
 router.post("/login", async (req, res, next) => {
   try {
-
-    if(req.session && req.session.user_id){
-      throw { status: 412, message: "a user is already logged in" };
-    }
-
     // check that username exists
     const users = await DButils.execQuery("SELECT username FROM users");
     if (!users.find((x) => x.username === req.body.username))

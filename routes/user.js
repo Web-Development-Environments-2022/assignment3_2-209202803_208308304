@@ -17,7 +17,7 @@ router.use(async function (req, res, next) {
     }).catch(err => next(err));
   } else {
     //res.sendStatus(401);
-    res.status(419).send({message: "Session expired please log back in", success: false});
+    res.status(419).send({message: "Session expired, please login again", success: false});
   }
 });
 
@@ -32,7 +32,7 @@ router.post('/favorites', async (req,res,next) => {
     const exist = await user_utils.checkIfRecipeIdExist(user_id, recipe_id);
     if(exist){
       await user_utils.markAsFavorite(user_id,recipe_id);
-      res.status(200).send({message: "Recipe successfully saved as favorite", success: true});
+      res.status(201).send({message: "Recipe successfully saved as favorite", success: true});
     } else {
       res.status(404).send({message: "Recipe Id Not Found", success: false});
     }
