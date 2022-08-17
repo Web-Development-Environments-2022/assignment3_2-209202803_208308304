@@ -61,6 +61,9 @@ const DButils = require("./utils/DButils");
       res.status(404).send({message: "Recipe Not Found", success: false});
     }
   } catch (error) {
+    if(error.response && error.response.status==402){
+      res.status(404).send({message: "Recipe Not Found", success: false});
+    }
     next(error);
   }
 });

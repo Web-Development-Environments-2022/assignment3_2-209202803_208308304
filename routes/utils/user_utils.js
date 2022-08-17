@@ -32,10 +32,7 @@ async function checkIfRecipeIdExist(user_id, recipe_id){
     else if(Number(recipe_id) == NaN){
         return false;
     }
-    else if(Number(recipe_id) <1165540){
-        return true;
-    }
-    return false;
+    return true;
 }
 
 async function getFavoriteRecipes(user_id){
