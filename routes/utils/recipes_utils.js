@@ -68,7 +68,7 @@ async function getRecipeFull(recipe_details_dict) {
             for (let i = 0; i < analyzedInstructions[j].steps.length; i++) {
                 instruction_details = {
                     number: number,
-                    step: analyzedInstructions[0].steps[i].step
+                    step: analyzedInstructions[j].steps[i].step
                 }
                 instructions.push(instruction_details);
                 number++;
